@@ -1,5 +1,6 @@
 import re  # Regular expressions: split text on punctuation and whitespace patterns.
 import SimpleTokenizerV2  # Our tokenizer class: maps strings ↔ integer ids using the vocab dict.
+import tiktoken
 
 # Load corpus and build a token→id vocabulary from its unique tokens.
 
@@ -11,7 +12,10 @@ preprocessed = re.split(r'([,.!?;:\'"()\-—…]|\s)', content)  # Split on spac
 preprocessed = [item for item in preprocessed if item.strip()]  # Drop empty strings and pure-whitespace chunks left by split.
 
 all_words = sorted(set(preprocessed))  # Unique tokens, sorted alphabetically so vocab order is stable and reproducible.
+all_words.extend(["<|endoftext|>", "<|unk|>"])
 vocab_size = len(all_words)  # How many distinct tokens the corpus vocabulary has (ids will be 0 .. vocab_size-1).
+print(f"Vocab size: {vocab_size}")
+
 
 vocab = {token: integer for integer, token in enumerate(all_words)}  # Map each token string to a consecutive integer id.
 
@@ -24,3 +28,31 @@ text = " <|endoftext|> ".join((text1, text2))  # Glue sentences with a special s
 
 print(text)  # Show the combined string so you can see how end-of-text markers sit between segments.
 
+print(tokenizer.decode(tokenizer.encode(text)))
+
+text = (
+    "Hello, do you like tea?" + "<|endoftext|> " + "In the sunlit terraces of the palace."
+    "of someunknowPlace."
+     )
+tokenizer = tiktoken.get_encoding("gpt2")
+integers = tokenizer.encode(text, allowed_special={"<|endoftext|>"})
+print(integers)
+strings = tokenizer.decode(integers)
+print(strings)
+
+text = "Akwirw ier"
+print(text)
+# Print each GPT-2 BPE token on its own line (one-liner). Pieces can look odd — that is normal subword splitting.
+print(
+    *[
+        tokenizer.decode([t])
+        for t in tokenizer.encode(text, allowed_special={"<|endoftext|>"})
+    ],
+    sep="\n",
+)
+
+integers = tokenizer.encode(text, allowed_special={"<|endoftext|>"})
+print(integers)
+strings = tokenizer.decode(integers)
+
+print(strings)
